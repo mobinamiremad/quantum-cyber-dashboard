@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Cyber-Core OS v4.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020204;
+            --card-bg: rgba(9, 7, 16, 0.72);
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff00ff;
+            --text-main: #ffffff;
+            --text-sub: #7a7488;
+            --glass-border: rgba(255, 0, 255, 0.2);
+            --glow-shadow: 0 0 35px rgba(0, 243, 255, 0.15);
+            --btn-bg: rgba(255, 255, 255, 0.04);
+            --grid-color: rgba(255, 0, 255, 0.05);
+        }
+
+        body.light-mode {
+            --bg: #f1f3f8;
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --neon-cyan: #007c8a;
+            --neon-magenta: #b0124a;
+            --text-main: #120e1a;
+            --text-sub: #585361;
+            --glass-border: rgba(176, 18, 74, 0.25);
+            --glow-shadow: 0 12px 40px rgba(176, 18, 74, 0.12);
+            --btn-bg: rgba(0, 0, 0, 0.05);
+            --grid-color: rgba(0, 124, 138, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+            transition: background 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), color 0.4s, border 0.4s, box-shadow 0.4s;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- MATRIX CANVAS BACKGROUND --- */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: var(--bg);
+        }
+
+        /* --- GLASS EFFECT & INTERACTION --- */
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(35px);
+            -webkit-backdrop-filter: blur(35px);
+            border: 1px solid var(--glass-border);
+            border-radius: 26px;
+            box-shadow: var(--glow-shadow);
+        }
+
+        .btn-neon {
+            padding: 14px 32px;
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            background: var(--btn-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
+        }
+
+        .btn-neon:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.5), inset 0 1px 4px rgba(255,255,255,0.2);
+            transform: translateY(-3px);
+        }
+
+        .btn-neon:active {
+            transform: translateY(1px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 1000;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .back-home {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        /* --- CORE PAGE ROUTING --- */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            animation: pageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes pageEnter {
+            from { opacity: 0; transform: scale(0.96) translateY(25px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .active { display: flex; }
+
+        /* --- DASHBOARD VIEW --- */
+        .menu-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 60px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 6px;
+            text-align: center;
+            text-shadow: 0 0 50px rgba(0, 243, 255, 0.25);
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            max-width: 1150px;
+            width: 100%;
+            padding: 0 20px;
+        }
+
+        .card {
+            height: 340px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            border: 1px solid var(--glass-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+            transition: 0.6s;
+        }
+
+        .card:hover::before { left: 100%; }
+
+        .card:hover {
+            transform: translateY(-12px);
+            border-color: var(--neon-magenta);
+            box-shadow: 0 25px 50px rgba(255, 0, 255, 0.35);
+        }
+
+        .card .icon {
+            font-size: 72px;
+            filter: drop-shadow(0 0 15px rgba(0,243,255,0.4));
+        }
+
+        .card h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* --- CALCULATOR SYSTEM --- */
+        .calc-wrapper { width: 450px; padding: 35px; border-radius: 32px; }
+        
+        .calc-display {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .calc-history { font-size: 1.05rem; color: var(--text-sub); min-height: 26px; font-family: 'Orbitron', sans-serif; }
+        
+        .calc-current {
+            font-size: 2.8rem;
+            color: var(--neon-cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.45);
+            margin-top: 5px;
+        }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        
+        .calc-btn {
+            height: 60px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .calc-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0,243,255,0.3); }
+        .calc-btn.op { color: var(--neon-magenta); }
+        .calc-btn.op:hover { border-color: var(--neon-magenta); box-shadow: 0 0 15px rgba(255,0,255,0.3); }
+        .calc-btn.fn { color: #ffb300; font-size: 0.95rem; }
+        
+        .calc-btn.equal {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+            color: #000; font-weight: 900; grid-row: span 2; height: 132px;
+        }
+        .calc-btn.equal:hover { box-shadow: 0 0 35px rgba(255, 0, 255, 0.65); color: #fff; }
+
+        /* --- NOTEPAD PRO SYSTEM --- */
+        .note-container { width: 85%; max-width: 980px; height: 75%; display: flex; flex-direction: column; padding: 45px; border-radius: 32px; }
+        
+        .note-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 18px;
+        }
+
+        .note-header h2 {
+            font-family: 'Orbitron', sans-serif; font-weight: 700;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .note-area {
+            flex: 1; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 18px; outline: none; color: var(--text-main); font-size: 1.25rem;
+            line-height: 1.8; resize: none; padding: 30px; box-shadow: inset 0 4px 25px rgba(0,0,0,0.3);
+        }
+
+        .note-footer {
+            display: flex; justify-content: space-between; margin-top: 15px;
+            font-size: 0.9rem; color: var(--text-sub); font-family: 'Orbitron', sans-serif;
+        }
+
+        /* --- VISUAL CANV-GAME --- */
+        .game-wrapper { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .game-header { font-family: 'Orbitron', sans-serif; font-size: 2rem; font-weight: 900; letter-spacing: 3px; color: var(--neon-cyan); }
+        #gameCanvas { border: 2px solid var(--neon-magenta); border-radius: 20px; background: #010103; box-shadow: 0 0 40px rgba(255, 0, 255, 0.3); cursor: none; }
+        .game-panel { display: flex; gap: 60px; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 700; }
+        .game-panel .score-val { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,243,255,0.5); }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20%, 60% { transform: translate(-10px, 10px); }
+            40%, 80% { transform: translate(10px, -10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bgCanvas"></canvas>
+
+    <button class="btn-neon glass theme-toggle" onclick="playSynth('theme'); toggleTheme()">
+        <span id="theme-icon">🌙</span>
+    </button>
+
+    <div id="menu" class="page active">
+        <h1 class="menu-title">QUANTUM SYSTEM ENGINE</h1>
+        <div class="cards-container">
+            <div class="card glass" onclick="playSynth('click'); showPage('calculator')">
+                <div class="icon">🧮</div>
+                <h2>Calculator</h2>
+            </div>
+            <div class="card glass" onclick="playSynth('click'); showPage('notepad')">
+                <div class="icon">📝</div>
+                <h2>Notepad Pro</h2>
+            </div>
+            <div class="card glass" onclick="playSynth('click'); showPage('game')">
+                <div class="icon">🎮</div>
+                <h2>Neon Dodge</h2>
+            </div>
+        </div>
+    </div>
+
+    <div id="calculator" class="page">
+        <button class="btn-neon glass back-home" onclick="playSynth('click'); showPage('menu')">🏠 BACK TO CORE</button>
+        <div class="calc-wrapper glass">
+            <div class="calc-display">
+                <div id="calc-history" class="calc-history"></div>
+                <div id="calc-current" class="calc-current">0</div>
+            </div>
+            <div class="calc-grid">
+                <button class="calc-btn fn" onclick="playSynth('click'); calcFn('sin')">sin</button>
+                <button class="calc-btn fn" onclick="playSynth('click'); calcFn('cos')">cos</button>
+                <button class="calc-btn fn" onclick="playSynth('click'); calcFn('tan')">tan</button>
+                <button class="calc-btn op" onclick="playSynth('clear'); calcClear()">C</button>
+                <button class="calc-btn op" onclick="playSynth('clear'); calcDel()">⌫</button>
+
+                <button class="calc-btn fn" onclick="playSynth('click'); calcFn('sqrt')">√</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('7')">7</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('8')">8</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('9')">9</button>
+                <button class="calc-btn op" onclick="playSynth('op'); calcIn('/')">÷</button>
+
+                <button class="calc-btn fn" onclick="playSynth('click'); calcFn('log')">log</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('4')">4</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('5')">5</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('6')">6</button>
+                <button class="calc-btn op" onclick="playSynth('op'); calcIn('*')">×</button>
+
+                <button class="calc-btn fn" onclick="playSynth('click'); calcFn('pi')">π</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('1')">1</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('2')">2</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('3')">3</button>
+                <button class="calc-btn op" onclick="playSynth('op'); calcIn('-')">−</button>
+
+                <button class="calc-btn fn" onclick="playSynth('click'); calcFn('exp')">e</button>
+                <button class="calc-btn" style="grid-column: span 2" onclick="playSynth('click'); calcIn('0')">0</button>
+                <button class="calc-btn" onclick="playSynth('click'); calcIn('.')">.</button>
+                <button class="calc-btn op" onclick="playSynth('op'); calcIn('+')">+</button>
+
+                <button class="calc-btn equal" style="grid-column: 5 / 6; grid-row: 4 / 6;" onclick="playSynth('equal'); calcRes()">=</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notepad" class="page">
+        <button class="btn-neon glass back-home" onclick="playSynth('click'); showPage('menu')">🏠 BACK TO CORE</button>
+        <div class="note-container glass">
+            <div class="note-header">
+                <h2>SECURE CORE MEMORY</h2>
+                <span style="font-size: 0.9rem; color: var(--neon-cyan)">STATUS: INTERACTIVE BUFFER LIVE</span>
+            </div>
+            <textarea id="note-area" class="note-area" placeholder="Initialize data logs..."></textarea>
+            <div class="note-footer">
+                <div>WORDS: <span id="word-count" style="color:var(--neon-magenta)">0</span></div>
+                <div>CHARACTERS: <span id="char-count" style="color:var(--neon-cyan)">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="game" class="page">
+        <button class="btn-neon glass back-home" onclick="playSynth('click'); stopGame(); showPage('menu')">🏠 BACK TO CORE</button>
+        <div class="game-wrapper">
+            <div class="game-header">NEON MATRIX DODGER</div>
+            <canvas id="gameCanvas" width="700" height="460"></canvas>
+            <div class="game-panel">
+                <div>SCORE: <span id="score" class="score-val">0</span></div>
+                <div>HI-SCORE: <span id="hi-score" style="color: var(--neon-magenta)">0</span></div>
+            </div>
+            <button class="btn-neon glass" onclick="playSynth('theme'); startGame()">⚡ INITIALIZE REBOOT</button>
+        </div>
+    </div>
+
+    <script>
+        // --- SAFE WEB AUDIO SYNTHESIZER ---
+        let audioCtx = null;
+        
+        function playSynth(type) {
+            // Context triggers only after actual click event to satisfy browser security
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                let now = audioCtx.currentTime;
+                if (type === 'click') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(900, now);
+                    gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+                    osc.start(now); osc.stop(now + 0.05);
+                } else if (type === 'op') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(600, now);
+                    gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+                    osc.start(now); osc.stop(now + 0.08);
+                } else if (type === 'clear') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.linearRampToValueAtTime(150, now + 0.15);
+                    gain.gain.setValueAtTime(0.06, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+                    osc.start(now); osc.stop(now + 0.15);
+                } else if (type === 'equal') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now);
+                    gain.gain.setValueAtTime(0.08, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
+                } else if (type === 'theme') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.25);
+                    gain.gain.setValueAtTime(0.04, now); gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+                    osc.start(now); osc.stop(now + 0.25);
+                }
+            } catch(e) {
+                console.log("Audio failed to play smoothly:", e);
+            }
+        }
+
+        // --- INTERACTIVE BACKGROUND ENGINE ---
+        const bgCanvas = document.getElementById('bgCanvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 130 };
+
+        function resizeBg() { 
+            bgCanvas.width = window.innerWidth; 
+            bgCanvas.height = window.innerHeight; 
+        }
+        
+        window.addEventListener('resize', resizeBg);
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * window.innerWidth;
+                this.y = Math.random() * window.innerHeight;
+                this.size = Math.random() * 2 + 1;
+                this.baseX = this.x; this.baseY = this.y;
+                this.density = (Math.random() * 30) + 15;
+                this.color = Math.random() > 0.5 ? '--neon-cyan' : '--neon-magenta';
+            }
+            draw() {
+                let colorHex = getComputedStyle(document.documentElement).getPropertyValue(this.color).trim();
+                bgCtx.fillStyle = colorHex || (this.color === '--neon-cyan' ? '#00f3ff' : '#ff00ff');
+                bgCtx.beginPath(); bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); bgCtx.fill();
+            }
+            update() {
+                if (mouse.x != null && mouse.y != null) {
+                    let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+                    let distance = Math.hypot(dx, dy);
+                    if (distance < mouse.radius) {
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        let directionX = (dx / distance) * force * this.density;
+                        let directionY = (dy / distance) * force * this.density;
+                        this.x -= directionX; this.y -= directionY;
+                        return;
+                    }
+                }
+                if (this.x !== this.baseX) { let dx = this.x - this.baseX; this.x -= dx / 15; }
+                if (this.y !== this.baseY) { let dy = this.y - this.baseY; this.y -= dy / 15; }
+            }
+        }
+
+        function initParticles() {
+            resizeBg(); particles = [];
+            for (let i = 0; i < 120; i++) particles.push(new Particle());
+        }
+
+        function animateBg() {
+            bgCtx.fillStyle = 'rgba(' + (document.body.classList.contains('light-mode') ? '241,243,248' : '2,2,4') + ', 0.2)';
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateBg);
+        }
+        
+        // Safe Initialization
+        initParticles(); 
+        animateBg();
+
+        // --- ROUTING / NAVIGATION ---
+        let activePage = 'menu';
+        function showPage(pageId) {
+            activePage = pageId;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if(pageId === 'game') startGame();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            document.getElementById('theme-icon').innerText = isLight ? '☀️' : '🌙';
+        }
+
+        // --- HARDWARE KEYBOARD BINDINGS ---
+        window.addEventListener('keydown', (e) => {
+            if (activePage === 'calculator') {
+                if (/[0-9.]/.test(e.key)) { playSynth('click'); calcIn(e.key); }
+                else if (['+', '-', '*', '/'].includes(e.key)) { playSynth('op'); calcIn(e.key); }
+                else if (e.key === 'Enter' || e.key === '=') { playSynth('equal'); calcRes(); }
+                else if (e.key === 'Backspace') { playSynth('clear'); calcDel(); }
+                else if (e.key === 'Escape') { playSynth('clear'); calcClear(); }
+            } else if (activePage === 'game') {
+                if (e.key === 'ArrowLeft' || e.key === 'a') { if(pilot.x > pilot.radius + 20) pilot.x -= 30; }
+                if (e.key === 'ArrowRight' || e.key === 'd') { if(pilot.x < canvas.width - pilot.radius - 20) pilot.x += 30; }
+            }
+        });
+
+        // --- ADVANCED CALCULATOR INTERNALS ---
+        let currentInput = "0"; let historyInput = "";
+        const currentDisp = document.getElementById('calc-current');
+        const historyDisp = document.getElementById('calc-history');
+
+        function updateCalcDisplay() { currentDisp.innerText = currentInput; historyDisp.innerText = historyInput; }
+        function calcIn(val) {
+            if (currentInput === "0" && val !== ".") currentInput = val;
+            else currentInput += val;
+            updateCalcDisplay();
+        }
+        function calcClear() { currentInput = "0"; historyInput = ""; updateCalcDisplay(); }
+        function calcDel() {
+            currentInput = currentInput.slice(0, -1);
+            if (currentInput === "") currentInput = "0";
+            updateCalcDisplay();
+        }
+        function calcFn(fn) {
+            let num = parseFloat(currentInput);
+            if (isNaN(num) && fn !== 'pi' && fn !== 'exp') return;
+            switch(fn) {
+                case 'sin': currentInput = Math.sin(num * Math.PI / 180).toFixed(6); break;
+                case 'cos': currentInput = Math.cos(num * Math.PI / 180).toFixed(6); break;
+                case 'tan': currentInput = Math.tan(num * Math.PI / 180).toFixed(6); break;
+                case 'sqrt': currentInput = num < 0 ? "Error" : Math.sqrt(num).toString(); break;
+                case 'log': currentInput = num <= 0 ? "Error" : Math.log10(num).toFixed(6); break;
+                case 'pi': currentInput = Math.PI.toFixed(6); break;
+                case 'exp': currentInput = Math.E.toFixed(6); break;
+            }
+            if(currentInput.includes('.')) currentInput = parseFloat(currentInput).toString();
+            updateCalcDisplay();
+        }
+        function calcRes() {
+            try {
+                historyInput = currentInput;
+                let parsed = currentInput.replace(/×/g, '*').replace(/÷/g, '/');
+                let res = Function('"use strict"; return (' + parsed + ')')();
+                currentInput = Number(res.toFixed(8)).toString();
+            } catch { currentInput = "Error"; }
+            updateCalcDisplay();
+        }
+
+        // --- NOTEPAD METRICS SYSTEM ---
+        const textarea = document.getElementById('note-area');
+        const wordCount = document.getElementById('word-count');
+        const charCount = document.getElementById('char-count');
+
+        function updateNoteMetrics() {
+            let text = textarea.value;
+            charCount.innerText = text.length;
+            let words = text.trim().split(/\s+/).filter(w => w.length > 0);
+            wordCount.innerText = words.length;
+        }
+
+        textarea.value = localStorage.getItem('cyber_dash_notes_v4') || "";
+        updateNoteMetrics();
+        textarea.addEventListener('input', () => {
+            localStorage.setItem('cyber_dash_notes_v4', textarea.value);
+            updateNoteMetrics();
+        });
+
+        // --- CYBER HIGH-VISUAL GAME ENGINE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreBox = document.getElementById('score');
+        const hiScoreBox = document.getElementById('hi-score');
+
+        let gameRunning = false; let gameScore = 0;
+        let hiScore = localStorage.getItem('neon_high_v4') || 0;
+        hiScoreBox.innerText = hiScore;
+
+        let pilot = { x: 350, y: 390, radius: 15, color: '--neon-cyan' };
+        let obstacles = []; let timeLoop = 0;
+
+        function startGame() {
+            gameRunning = true; gameScore = 0; obstacles = []; pilot.x = 350;
+            scoreBox.innerText = gameScore;
+            runEngine();
+        }
+        function stopGame() { gameRunning = false; }
+
+        canvas.addEventListener('mousemove', (e) => {
+            const bounds = canvas.getBoundingClientRect();
+            let targetX = e.clientX - bounds.left;
+            if (targetX > pilot.radius && targetX < canvas.width - pilot.radius) pilot.x = targetX;
+        });
+
+        function triggerScreenShake() {
+            document.getElementById('game').style.animation = 'shake 0.4s ease';
+            setTimeout(() => { document.getElementById('game').style.animation = ''; }, 400);
+        }
+
+        function runEngine() {
+            if (!gameRunning) return;
+
+            ctx.fillStyle = 'rgba(2, 2, 5, 0.28)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid Wireframe lines
+            ctx.strokeStyle = varColor('--grid-color');
+            ctx.lineWidth = 2;
+            for(let i = -100; i <= canvas.width + 100; i += 50) {
+                ctx.beginPath(); ctx.moveTo(canvas.width / 2, 50); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+
+            // Draw Dynamic Pilot
+            ctx.shadowBlur = 25; ctx.shadowColor = varColor('--neon-cyan');
+            ctx.fillStyle = varColor('--neon-cyan');
+            ctx.beginPath(); ctx.arc(pilot.x, pilot.y, pilot.radius, 0, Math.PI * 2); ctx.fill();
+
+            // Spawn Obstacles
+            if (timeLoop % 12 === 0) {
+                obstacles.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: -20,
+                    size: Math.random() * 22 + 12,
+                    speed: 5 + (gameScore / 10)
+                });
+            }
+
+            // Game Logic Loop
+            obstacles.forEach((obs, idx) => {
+                obs.y += obs.speed;
+                ctx.shadowBlur = 20; ctx.shadowColor = varColor('--neon-magenta');
+                ctx.fillStyle = varColor('--neon-magenta');
+                ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.size / 2, 0, Math.PI * 2); ctx.fill();
+
+                let dist = Math.hypot(pilot.x - obs.x, pilot.y - obs.y);
+                if (dist < (pilot.radius + obs.size / 2)) {
+                    gameRunning = false;
+                    triggerScreenShake();
+                    if(gameScore > hiScore) {
+                        hiScore = gameScore;
+                        localStorage.setItem('neon_high_v4', hiScore);
+                        hiScoreBox.innerText = hiScore;
+                    }
+                    alert(`⚠️ QUANTUM MATRIX BREAKDOWN\nScore: ${gameScore}`);
+                }
+
+                if (obs.y > canvas.height + 20) {
+                    obstacles.splice(idx, 1); gameScore++; scoreBox.innerText = gameScore;
+                }
+            });
+
+            timeLoop++; requestAnimationFrame(runEngine);
+        }
+
+        function varColor(varName) {
+            let color = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+            if(!color) {
+                if(varName === '--grid-color') return 'rgba(255, 0, 255, 0.05)';
+                if(varName === '--neon-cyan') return '#00f3ff';
+                if(varName === '--neon-magenta') return '#ff00ff';
+            }
+            return color;
+        }
+    </script>
+</body>
+</html>
